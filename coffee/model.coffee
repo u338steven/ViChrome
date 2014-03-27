@@ -149,12 +149,17 @@ g.model =
         g.logger.d "enterFMode"
         @changeMode( (new g.ExtFMode).setOption( opt || {} ) )
 
+    enterCaretMode : (target) ->
+        g.logger.d "enterCaretMode"
+        @changeMode( (new g.CaretMode).setTarget( target ) )
+
     isInNormalMode    : -> @curMode.getName() == "NormalMode"
     isInInsertMode    : -> @curMode.getName() == "InsertMode"
     isInSearchMode    : -> @curMode.getName() == "SearchMode"
     isInCommandMode   : -> @curMode.getName() == "CommandMode"
     isInFMode         : -> @curMode.getName() == "FMode"
     isInEmergencyMode : -> @curMode.getName() == "EmergencyMode"
+    isInCaretMode     : -> @curMode.getName() == "CaretMode"
 
     goNextSearchResult : (reverse) ->
         unless @searcher? then return
@@ -254,7 +259,7 @@ g.model =
             when "aliases" then @getAlias = getAliasFirst
 
     onFocus : (target) ->
-        if @isInCommandMode() or @isInSearchMode() or @isInEmergencyMode()
+        if @isInCommandMode() or @isInSearchMode() or @isInEmergencyMode() or @isInCaretMode()
             g.logger.d "onFocus:nothing should be done in the cur mode"
             return
 

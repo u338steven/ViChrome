@@ -86,6 +86,7 @@ class g.CommandExecuter
         GoFMode               : triggerInsideContent
         GoExtFMode            : triggerInsideContent
         GoEmergencyMode       : triggerInsideContent
+        GoCaretMode           : triggerInsideContent
         FocusOnFirstInput     : triggerInsideContent
         BackToPageMark        : triggerInsideContent
         RestoreTab            : sendToBackground

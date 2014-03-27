@@ -121,6 +121,7 @@ class g.Mode
     reqGoSearchModeBackward : -> g.model.enterSearchMode( true )
     reqGoLinkTextSearchMode : -> g.model.enterSearchMode( false, new g.LinkTextSearcher )
     reqGoEmergencyMode : -> g.model.enterEmergencyMode()
+    reqGoCaretMode : -> g.model.enterCaretMode()
 
     reqBackToPageMark : ->
         # TODO:enable to go any pagemark, not only unnamed.
@@ -146,6 +147,7 @@ class g.Mode
             when "--yank" then opt.mode='yank'
             when "--open" then opt.mode ='open'
             when "--opentab" then opt.mode= 'opentab'
+            when "--caret" then opt.mode= 'caret'
 
         if opt.mode?
           g.model.enterFMode(opt)
@@ -375,6 +377,9 @@ class g.FMode extends g.Mode
           if text?
               (new g.CommandExecuter).set("Copy #{text}").parse().execute()
           g.model.enterNormalMode()
+
+      caret: (target) ->
+          g.model.enterCaretMode(target)
     }
 
     getName   : -> "FMode"
@@ -420,7 +425,7 @@ class g.FMode extends g.Mode
             if @opt.continuous
                 @currentInput = ""
                 g.view.setStatusLineText(@statusLineHeader())
-            else
+            else if @opt.mode != 'caret'
                 g.view.hideStatusLine()
 
     prePostKeyEvent : (key, ctrl, alt, meta) ->
@@ -509,7 +514,10 @@ class g.FMode extends g.Mode
             @showFunc = $.fn.show
             @hideFunc = $.fn.hide
 
-        links = $('a:_visible,*:input:_visible,.button:_visible')
+        if @opt.mode == 'caret'
+            links = $('*:_visible')
+        else
+            links = $('a:_visible,*:input:_visible,.button:_visible')
         $('img[usemap^="#"]:_visible').each(->
           offset = this._offset_
           mapName = $(this).attr('usemap').slice(1)
@@ -549,6 +557,7 @@ class g.ExtFMode extends g.Mode
       'O': 'opentab'
       'y': 'yank'
       'Y': 'yanktext'
+      'c': 'caret'
     }
     getName   : -> "ExtFMode"
     setOption : (@opt) -> this
@@ -573,6 +582,35 @@ class g.ExtFMode extends g.Mode
         $('span#vichromehint').remove()
         $('.vichrome-fModeTarget').removeClass('vichrome-fModeTarget')
 
+class g.CaretMode extends g.Mode
+    getName   : -> "CaretMode"
+    setTarget : (@target) -> this
+    getKeyMapping   : -> g.model.getIMap()
+    prePostKeyEvent : (key, ctrl, alt, meta) -> true
+
+    blur : ->
+        g.model.enterNormalMode()
+
+    enter : ->
+        @origin = { spellcheck : document.body.spellcheck, contentEditable : document.body.contentEditable }
+        document.body.spellcheck = false
+        document.body.contentEditable = true
+        range = document.createRange()
+        if !@target
+            @target = document.body
+        range.setStart(@target, 0)
+        range.setEnd(@target, 0)
+        select = window.getSelection()
+        select.removeAllRanges()
+        select.addRange(range)
+        g.view.setStatusLineText 'caret mode'
+
+    exit : ->
+        document.body.contentEditable = @origin.contentEditable
+        document.body.spellcheck = @origin.spellcheck
+        select = window.getSelection()
+        select.removeAllRanges()
+        g.view.hideStatusLine()
 
 $.extend( $.expr[':'],
     _visible : (elem) ->
