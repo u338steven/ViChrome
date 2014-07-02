@@ -354,7 +354,11 @@ class g.FMode extends g.Mode
               g.model.enterNormalMode()
 
       open: (target, primary=false) ->
-          @hitMode.focus.call(this, target)
+          if g.util.isEditable(target)
+              $(target).focus()
+              g.model.enterInsertMode()
+          else if not @opt.continuous
+              g.model.enterNormalMode()
           g.util.dispatchMouseClickEvent target, primary, false, false
 
       opentab: (target) -> @hitMode.open.call(this, target, true)
@@ -424,6 +428,7 @@ class g.FMode extends g.Mode
 
             if @opt.continuous
                 @currentInput = ""
+                @updateHints()
                 g.view.setStatusLineText(@statusLineHeader())
             else if @opt.mode != 'caret'
                 g.view.hideStatusLine()
